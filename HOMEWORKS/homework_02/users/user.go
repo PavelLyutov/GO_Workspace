@@ -9,4 +9,5 @@ type UserInfo struct{
 	Forks int
 	DistributionLanguage data.PairList
 	Followers int `json:"followers"`
+	DistributionWork data.PairList
 }

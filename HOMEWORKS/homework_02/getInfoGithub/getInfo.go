@@ -6,6 +6,7 @@ import (
 	"homework_02/users"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func GetFromGithub(username string) (users.UserInfo) {
@@ -49,7 +50,50 @@ func GetFromGithub(username string) (users.UserInfo) {
 			allLang[k] += v
 		}
 	}
+	user.DistributionLanguage = data.GetTopFiveByPercent(data.SortByValue(allLang))
+	user.DistributionWork = data.GetYearsByPercent(data.SortByValue(GetInfoFromContribution(username)))
 
-		user.DistributionLanguage = data.GetTopFiveByPercent(data.SortByValue(allLang))
 	return user
 }
+
+func GetInfoFromContribution(username string) (map[string]int){
+	years := []int{2017, 2018, 2019, 2020, 2021}
+	contInfo := make(map[string]int)
+
+	for _, v := range years {
+
+		resp, err := http.Get("https://skyline.github.com/" + username + "/" + strconv.Itoa(v) + ".json")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer resp.Body.Close()
+		var contribution users.Contribution
+		decoder := json.NewDecoder(resp.Body)
+		decoder.Decode(&contribution)
+		var total int
+		for i := 0; i < len(contribution.Count); i++ {
+			for j := 0; j < len(contribution.Count[i].Days); j++ {
+				total += contribution.Count[i].Days[j].Count
+			}
+		}
+		contInfo[strconv.Itoa(v)] += total
+
+	}
+	return  contInfo
+}
+
+//func GetLastFiveYears(username string) PairList {
+//	cont := make(PairList, 5)
+//	years := []int{2017, 2018, 2019, 2020, 2021}
+//	i := 0
+//
+//	for _, v := range years {
+//		var key string
+//		var value int
+//		key, value = getInfoGithub.GetInfoFromContribution(username, v)
+//		cont[i] = Pair{key, value}
+//	}
+//
+//	return cont
+//}
+
